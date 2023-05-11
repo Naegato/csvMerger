@@ -1,0 +1,24 @@
+.grid {
+  //background-color: red;
+  display: flex;
+  flex-direction: row;
+  width: fit-content;
+  position: relative;
+  margin-top: 5rem;
+}
+
+.controls {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  transform: translateX(50%);
+
+  button {
+    width: 2rem;
+    height: 2rem;
+  }
+}

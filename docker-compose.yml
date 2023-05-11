@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  node:
+    image: node:20
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: sh -c "cd /app && npm install && npm start"
+  php:
+    image: php:8.2-apache
+    ports:
+      - "8080:80"
+    volumes:
+      - ./php:/var/www/html
+    command: sh -c "chmod -R 777 ../html && apache2-foreground"
