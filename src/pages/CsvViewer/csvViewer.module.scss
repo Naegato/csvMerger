@@ -1,0 +1,67 @@
+@use '/src/styles/variables' as v;
+
+.container {
+  margin: auto;
+  width: 100%;
+  padding: 0 2.5rem;
+
+  .controller {
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+
+    .button {
+      padding: .5rem 1rem;
+      border-radius: .5rem;
+      border: none;
+      background-color: v.$white;
+      cursor: pointer;
+      display: flex;
+      gap: 1rem;
+    }
+  }
+
+ .tableContainer {
+   width: 100%;
+    overflow-x: auto;
+
+   .table {
+    background-color: v.$white;
+    vertical-align: middle;
+    border-collapse: collapse;
+    overflow-x: auto;
+    width: 100%;
+
+     .row {
+       &:nth-child(even) {
+         background-color: transparentize(v.$black, .9);
+       }
+     }
+
+    .cell {
+      padding: .8rem 2rem;
+      white-space: nowrap;
+      text-align: center;
+      border: .1rem solid v.$black;
+      overflow: hidden;
+
+      &:nth-child(odd) {
+        background-color: transparentize(v.$black, .9);
+      }
+
+      &:first-child {
+        width: 15rem;
+        position: sticky;
+        background-color: v.$white;
+        outline: 1px solid v.$black;
+        left: 0;
+      }
+    }
+
+    .head {
+      font-weight: bold;
+      background-color: transparentize(v.$black, .8);
+    }
+  }
+}
+}
