@@ -39,7 +39,6 @@ export const Column: FC<ColumnProps> = ({
 }) => {
   const [titleValue, setTitleValue] = useState<string>(title);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [haveToaster, setHaveToaster] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   useEffect(() => {
@@ -47,46 +46,50 @@ export const Column: FC<ColumnProps> = ({
   }, [title]);
 
   return <div className={cn({locked})}>
-    {haveToaster && <Toaster />}
     <div className={cn(styles.column)}>
       <div className={styles.controls}>
-        <button
-          onClick={() => {
-            setHaveToaster(true);
-            if ( titleValue === '' ) {
-              toast.error( 'Title cannot be empty' );
-              setTitleValue(title);
-            } else if ( titleValue.toLowerCase() === 'greg' ) {
-              toast.error( 'Greg is not allowed' );
-              setTitleValue(title);
-            } else {
-              setTitle( titleValue );
-            }
-            setHaveToaster(false);
-            setIsEditing( x => !x );
-          }}
-          className={cn(styles.button, { [styles.edit]: isEditing })}
-        >
-          <FontAwesomeIcon icon={isEditing ? faCheck : faPen}/>
-        </button>
-        <button
-          onClick={() => {
-            if ( isDeleting ) {
-              setIsDeleting( false );
-              handleDelete();
-            } else {
-              setIsDeleting( true );
-              setTimeout( () => {
+        {!locked && <>
+          <button
+            onClick={() => {
+              if ( titleValue === '' ) {
+                toast.error( 'Title cannot be empty' );
+                setTitleValue( title );
+              } else if ( titleValue.toLowerCase() === 'greg' ) {
+                toast.error( 'Greg is not allowed' );
+                setTitleValue( title );
+              } else {
+                setTitle( titleValue );
+              }
+              setIsEditing( x => !x );
+            }}
+            className={cn( styles.button, { [styles.edit]: isEditing } )}
+          >
+            <FontAwesomeIcon icon={isEditing ? faCheck : faPen}/>
+          </button>
+          <button
+            onClick={() => {
+              if ( isDeleting ) {
                 setIsDeleting( false );
-              }, 2000 );
-            }
-          }}
-          className={cn(styles.button, { [styles.delete]: isDeleting })}
-        >
-          <FontAwesomeIcon icon={faX}/>
-        </button>
+                handleDelete();
+              } else {
+                setIsDeleting( true );
+                setTimeout( () => {
+                  setIsDeleting( false );
+                }, 2000 );
+              }
+            }}
+            className={cn( styles.button, { [styles.delete]: isDeleting } )}
+          >
+            <FontAwesomeIcon icon={faX}/>
+          </button>
+        </>
+      }
         <button
-          onClick={() => setLocked( !locked )}
+          onClick={() => {
+            setLocked( !locked );
+            setIsEditing( false );
+            setIsDeleting( false);
+          }}
           className={cn(styles.button, { [styles.locked]: locked })}
         >
           <FontAwesomeIcon icon={locked ? faLock : faLockOpen}/>
@@ -96,7 +99,7 @@ export const Column: FC<ColumnProps> = ({
         className={cn(styles.columnTitle, { [styles.editing]: isEditing })}
         style={{ width: `${titleValue.length}ch` }}
         onDoubleClick={() => {
-          if ( !isDeleting ) {
+          if ( !locked ) {
             setIsEditing( true );
           }
         }}

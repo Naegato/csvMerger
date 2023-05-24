@@ -1,4 +1,4 @@
-import { ColumnProps, useAppContext } from '@/component/context/AppContext';
+import { useAppContext } from '@/component/context/AppContext';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import toast, { Toaster } from 'react-hot-toast';
@@ -8,7 +8,20 @@ import { Column } from '@/component/Column';
 import cn from 'classnames';
 import Papa from 'papaparse';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSave, faX } from '@fortawesome/free-solid-svg-icons';
+
+export type ColumnProps = {
+  id: number,
+  title: string,
+  locked: boolean,
+  mapping?: string[],
+  func?: FunctionColumnProps,
+  defaultValue?: string,
+}
+
+type CsvProps = {
+  [key: string]: any
+}
 
 export type FileColumnProps = {
   label: string,
@@ -30,9 +43,13 @@ export type FuncProps = {
 
 const CsvEditor = () => {
   const router = useRouter();
-  const { files, setCsv, columns, setColumns } = useAppContext();
+  const { files } = useAppContext();
   const [ filesColumns, setFilesColumns ] = useState<FileColumnProps[]>( [] );
+  const [ csv, setCsv ] = useState<CsvProps[]>( [] );
+  const [ columns, setColumns ] = useState<ColumnProps[]>( [] );
   const [ fileData, setFileData ] = useState<any>( {} );
+  const [ href, setHref ] = useState<string>( '' );
+  const [ previewColumns, setPreviewColumns ] = useState<ColumnProps[]>( [] );
 
   const functionsColumns = useMemo<FunctionColumnProps[]>( () => ([
     {
@@ -48,8 +65,13 @@ const CsvEditor = () => {
   ]), [] );
 
   useEffect( () => {
-    console.log(columns);
-  }, [ columns ] );
+    const parse = Papa.unparse(csv);
+    const blob = new Blob([parse], {type: 'text/csv;charset=utf-8'});
+    // @ts-ignore
+    const url = URL.createObjectURL(blob)
+
+    setHref(url);
+  }, [ previewColumns ] );
 
   useEffect( () => {
     files.forEach( ( file ) => {
@@ -58,7 +80,7 @@ const CsvEditor = () => {
         skipEmptyLines: true,
         complete: function ( results ) {
 
-          setFileData((x: any) => ({...x, [file.name]: results.data}));
+          setFileData( ( x: any ) => ({ ...x, [file.name]: results.data }) );
 
           // setFileData( x => ({ ...x,  }))
           setFilesColumns( x =>
@@ -131,7 +153,7 @@ const CsvEditor = () => {
     }
   }, [] );
 
-  return <>
+  return <div className={styles.container}>
     <div className={styles.csvEditor}>
       <div className={styles.header}>
         <h1 className={styles.title}>Éditeur de csv :</h1>
@@ -142,7 +164,7 @@ const CsvEditor = () => {
               setColumns( columns => [
                 ...columns,
                 {
-                  id: columns.length + 1,
+                  id: columns.map( ( x ) => x.id ).reduce( ( acc, cur ) => Math.max( acc, cur ), 0 ) + 1,
                   title: `Column ${columns.length + 1}`,
                   locked: false,
                 },
@@ -151,6 +173,15 @@ const CsvEditor = () => {
           >
             <FontAwesomeIcon icon={faPlus}/>
           </button>
+          {columns.length > 2 && <button
+            className={cn( styles.button )}
+            onClick={() => {
+              setColumns( [] );
+            }}
+          >
+            Supprimer tout
+            <FontAwesomeIcon icon={faX}/>
+          </button>}
         </div>
       </div>
 
@@ -164,7 +195,7 @@ const CsvEditor = () => {
         filter={'.locked'}
       >
         {columns.map( ( props, index ) => {
-          const { id, title, locked, func, mapping, defaultValue } = props;
+            const { id, title, locked, func, mapping, defaultValue } = props;
             return <Column
               defaultValue={defaultValue || ''}
               setDefaultValue={( defaultValue ) => setColumns( items => items.map( ( item ) => item.id === id ? ({
@@ -203,31 +234,83 @@ const CsvEditor = () => {
         <button
           className={cn( styles.button )}
           onClick={() => {
-            const transformedFileData = Object.keys(fileData).flatMap((fileName) =>
-              fileData[fileName].map((data: any) => ({ [fileName]: data }))
-            )
+            const transformedFileData = Object.keys( fileData ).flatMap( ( fileName ) =>
+              fileData[fileName].map( ( data: any ) => ({ [fileName]: data }) ),
+            );
 
             const csv = transformedFileData.map( ( file: any ) => {
-              const [ fileName, data ]: [string, any] = Object.entries( file )[0];
-              return  columns.reduce( ( acc: any, column: ColumnProps ) => {
-                const mapping = column.mapping?.find((x) => data?.[filesColumns[parseInt(x)]?.label]);
+              const [ fileName, data ]: [ string, any ] = Object.entries( file )[0];
+              return columns.reduce( ( acc: any, column: ColumnProps ) => {
+                const mapping = column.mapping?.find( ( x ) => data?.[filesColumns[parseInt( x )]?.label] );
                 return {
                   ...acc,
                   // [column.title]: data?.[filesColumns?.[parseInt(mapping || '')]?.label] || functionsColumns[] ?.func?.({fileName, data, columnName: column.title}),
-                  [column.title]: data?.[filesColumns?.[parseInt(mapping || '')]?.label] || column?.func?.func?.({fileName, data, columnName: column.title, defaultValue: column.defaultValue || ''}),
+                  [column.title]: data?.[filesColumns?.[parseInt( mapping || '' )]?.label] || column?.func?.func?.( {
+                    fileName,
+                    data,
+                    columnName: column.title,
+                    defaultValue: column.defaultValue || '',
+                  } ),
                 };
-              }, {});
+              }, {} );
             } );
 
-            setCsv(csv);
-            router.push( '/CsvViewer' );
+            setCsv( csv );
+            setPreviewColumns( columns );
           }}
         >
           Voir l'aperçu
         </button>
+        {csv.length !== 0 && previewColumns.length !== 0 && <button
+          className={cn( styles.button )}
+          onClick={() => {
+            setPreviewColumns( [] );
+          }}
+        >
+          Cacher l'aperçu
+        </button>}
       </div>
     </div>
-  </>;
+    {csv.length !== 0 && previewColumns.length !== 0 && <div className={styles.containerViewer}>
+
+      <div className={styles.tableContainer}>
+        <table className={styles.table}>
+          <thead className={styles.head}>
+          <tr className={styles.row}>
+            <td className={styles.cell}>#</td>
+            {previewColumns.map( previewColumn => <td className={styles.cell}>
+              {previewColumn.title}
+            </td> )}
+          </tr>
+          </thead>
+          <tbody className={styles.body}>
+          {csv.map( ( item, i ) => <tr className={styles.row}>
+            <td className={styles.cell}>{i + 1}</td>
+            {previewColumns.map( previewColumn => <td className={styles.cell}>
+              {item?.[previewColumn.title]}
+            </td> )}
+          </tr> )}
+          </tbody>
+        </table>
+      </div>
+      <div className={styles.controller}>
+        <button className={styles.button} onClick={() => {
+          if ( href ) {
+            const element = document.createElement( 'a' );
+            element.href = href;
+            element.download = 'myFile.csv';
+            document.body.appendChild( element );
+            element.click();
+          }
+        }}>
+          Enregistrer au format csv
+          <span className={styles.icon}>
+            <FontAwesomeIcon icon={faSave}/>
+          </span>
+        </button>
+      </div>
+    </div>}
+  </div>;
 };
 
 export default CsvEditor;

@@ -12,11 +12,6 @@ export default function Home() {
   const {files, setFiles} = useAppContext();
   const [isFilesValid, setIsFilesValid] = useState<boolean>(false);
 
-  // use effect to log the files
-  // useEffect(() => {
-  //   console.log(files);
-  // }, [files]);
-
   useEffect(() => {
     setIsFilesValid(false);
     if (files.length > 0) {
