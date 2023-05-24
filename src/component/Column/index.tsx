@@ -113,7 +113,6 @@ export const Column: FC<ColumnProps> = ({
             autoFocus
             onKeyPress={e => {
               if ( e.key === 'Enter' ) {
-                setHaveToaster(true);
                 if ( titleValue === '' ) {
                   toast.error( 'Title cannot be empty' );
                   setTitleValue(title);
@@ -123,7 +122,6 @@ export const Column: FC<ColumnProps> = ({
                 } else {
                   setTitle( titleValue );
                 }
-                setHaveToaster(false);
                 setIsEditing( x => !x );
               }
             }}

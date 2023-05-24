@@ -234,6 +234,11 @@ const CsvEditor = () => {
         <button
           className={cn( styles.button )}
           onClick={() => {
+            if ( columns.length === 0 ) {
+              toast.error( 'Aucune colonne n\'a été ajoutée' );
+              return;
+            }
+
             const transformedFileData = Object.keys( fileData ).flatMap( ( fileName ) =>
               fileData[fileName].map( ( data: any ) => ({ [fileName]: data }) ),
             );
@@ -244,7 +249,6 @@ const CsvEditor = () => {
                 const mapping = column.mapping?.find( ( x ) => data?.[filesColumns[parseInt( x )]?.label] );
                 return {
                   ...acc,
-                  // [column.title]: data?.[filesColumns?.[parseInt(mapping || '')]?.label] || functionsColumns[] ?.func?.({fileName, data, columnName: column.title}),
                   [column.title]: data?.[filesColumns?.[parseInt( mapping || '' )]?.label] || column?.func?.func?.( {
                     fileName,
                     data,
